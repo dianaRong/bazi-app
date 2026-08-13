@@ -16,6 +16,7 @@ def get_longitude(city: str) -> float:
     return location.longitude
 
 
+
 def equation_of_time_minutes(dt: datetime) -> float:
     n = dt.timetuple().tm_yday
     b = math.radians((360 / 365) * (n - 81))
@@ -87,6 +88,33 @@ def interpret_bazi(bazi_data: dict) -> str:
     )
     return response.choices[0].message.content
 
+def chat_about_bazi(bazi_data: dict, history: list) -> str:
+    system_prompt = f"""你是一位精通子平法的命理师。请参考以下《滴天髓》原文进行分析：
+
+--- 《滴天髓》原文 ---
+{DITIANSUI_TEXT}
+--- 原文结束 ---
+
+以下是用户的八字命盘，请根据这些数据回答用户的问题。
+只根据提供的数据分析，不要自行推算干支或编造数据中没有的信息。
+不要预测死亡、重大疾病或具体医疗结果。
+回答简洁，每次200字左右。
+
+四柱：{bazi_data['四柱']}
+日主：{bazi_data['日主']}
+五行：{bazi_data['五行']}
+天干十神：{bazi_data['天干十神']}
+地支十神：{bazi_data['地支十神']}
+藏干：{bazi_data['藏干']}
+大运：{bazi_data['大运']}
+"""
+    messages = [{"role": "system", "content": system_prompt}] + history
+
+    response = _llm_client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=messages,
+    )
+    return response.choices[0].message.content
 if __name__ == "__main__":
     result = get_bazi(2007, 8, 15, 21, 10, "女", city="Shenzhen")
     for key, value in result.items():
